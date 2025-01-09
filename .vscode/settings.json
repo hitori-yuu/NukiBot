@@ -1,0 +1,32 @@
+{
+    "workbench.editor.enablePreview": false,
+    "files.insertFinalNewline": true,
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "editor.minimap.enabled": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "diffEditor.maxComputationTime": 0,
+    "settingsSync.ignoredExtensions": [],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    },
+    "[javascript]": {
+        "editor.formatOnSave": true
+    },
+    "[javascriptreact]": {
+        "editor.formatOnSave": true
+    },
+    "[json]": {
+        "editor.formatOnSave": true
+    },
+    "[typescript]": {
+        "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+        "editor.formatOnSave": true
+    },
+    "[prisma]": {
+        "editor.defaultFormatter": "Prisma.prisma"
+    },
+    "html.format.contentUnformatted": ""
+}
