@@ -1,0 +1,266 @@
+// This is your Prisma schema file
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+    ADMIN
+    TEACHER
+    STUDENT
+}
+
+enum NotificationType {
+    GENERAL
+    SCHEDULE_CHANGE
+    ASSIGNMENT
+    DOCUMENT
+}
+
+enum CycleType {
+    A
+    B
+    C
+    D
+}
+
+enum DayOfWeek {
+    MONDAY
+    TUESDAY
+    WEDNESDAY
+    THURSDAY
+    FRIDAY
+}
+
+model User {
+    id           String         @id @default(cuid())
+    username     String         @unique
+    email        String         @unique
+    studentId    String?        @unique // 生徒の場合のみ設定
+    role         UserRole
+    createdAt    DateTime       @default(now())
+    updatedAt    DateTime       @updatedAt
+    Notification Notification[]
+    ChatLog      ChatLog[]
+    Student      Student[]
+}
+
+model Schedule {
+    id           String           @id @default(cuid())
+    date         DateTime
+    academicYear Int
+    grade        Int
+    className    String
+    createdAt    DateTime         @default(now())
+    updatedAt    DateTime         @updatedAt
+    details      ScheduleDetail[]
+}
+
+model ScheduleDetail {
+    id         String   @id @default(cuid())
+    schedule   Schedule @relation(fields: [scheduleId], references: [id])
+    scheduleId String
+    period     Int
+    content    String
+    roomName   String?
+}
+
+model Assignment {
+    id           String   @id @default(cuid())
+    title        String
+    description  String
+    subject      String
+    dueDate      DateTime
+    academicYear Int
+    grade        Int
+    className    String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+}
+
+model Document {
+    id           String   @id @default(cuid())
+    title        String
+    description  String
+    fileUrl      String
+    subject      String
+    academicYear Int
+    grade        Int
+    className    String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+}
+
+model Notification {
+    id        String           @id @default(cuid())
+    user      User             @relation(fields: [userId], references: [id])
+    userId    String
+    title     String
+    content   String
+    type      NotificationType
+    isRead    Boolean          @default(false)
+    createdAt DateTime         @default(now())
+}
+
+model SchoolRule {
+    id        String   @id @default(cuid())
+    category  String
+    title     String
+    content   String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model ChatLog {
+    id        String   @id @default(cuid())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    question  String
+    answer    String
+    createdAt DateTime @default(now())
+}
+
+model Timetable {
+    id           String            @id @default(cuid())
+    academicYear Int // 年度
+    grade        Int // 学年
+    className    String // クラス
+    cycleType    CycleType // A/B/C/D周期
+    isActive     Boolean           @default(true)
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime          @updatedAt
+    details      TimetableDetail[]
+
+    @@unique([academicYear, grade, className, cycleType])
+}
+
+model TimetableDetail {
+    id          String           @id @default(cuid())
+    timetable   Timetable        @relation(fields: [timetableId], references: [id])
+    timetableId String
+    dayOfWeek   DayOfWeek // 曜日（月～金）
+    period      Int // 時限（1～5）
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+    changes     ScheduleChange[]
+    Subject     Subject?         @relation(fields: [subjectId], references: [id])
+    subjectId   String?
+
+    @@unique([timetableId, dayOfWeek, period])
+}
+
+model ScheduleChange {
+    id                  String          @id @default(cuid())
+    timetableDetail     TimetableDetail @relation(fields: [timetableDetailId], references: [id])
+    timetableDetailId   String
+    date                DateTime // 変更日
+    newSubjectTeacher   SubjectTeacher  @relation(fields: [newSubjectTeacherId], references: [id])
+    newSubjectTeacherId String
+    newRoomName         String
+    reason              String?
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+}
+
+model Student {
+    id             String    @id @default(cuid())
+    enrollmentYear Int
+    uniqueSchoolId String    @unique
+    firstName      String
+    lastName       String
+    firstNameKana  String
+    lastNameKana   String
+    dateOfBirth    DateTime?
+    gender         String?
+    email          String?
+    currentGrade   Int
+    currentClass   String
+    currentNumber  Int
+    isActive       Boolean   @default(true)
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+
+    history StudentHistory[]
+    user    User?            @relation(fields: [userId], references: [id])
+    userId  String?
+
+    @@unique([enrollmentYear, uniqueSchoolId])
+}
+
+model StudentHistory {
+    id           String   @id @default(cuid())
+    student      Student  @relation(fields: [studentId], references: [id])
+    studentId    String
+    academicYear Int
+    grade        Int
+    className    String
+    number       Int
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    @@unique([studentId, academicYear])
+}
+
+model Subject {
+    id        String   @id @default(cuid())
+    name      String   @unique
+    roomName  String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    teachers        SubjectTeacher[]
+    TimetableDetail TimetableDetail[]
+    Quiz            Quiz[]
+    ExamScope       ExamScope[]
+}
+
+model SubjectTeacher {
+    id             String           @id @default(cuid())
+    subject        Subject          @relation(fields: [subjectId], references: [id])
+    subjectId      String
+    teacherId      String
+    academicYear   Int
+    grade          Int
+    className      String
+    isActive       Boolean          @default(true)
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    ScheduleChange ScheduleChange[]
+
+    @@unique([subjectId, teacherId, academicYear, grade, className])
+}
+
+model Quiz {
+    id           String   @id @default(cuid())
+    subject      Subject  @relation(fields: [subjectId], references: [id])
+    subjectId    String
+    academicYear Int
+    grade        Int
+    className    String
+    scope        String
+    testDate     DateTime
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    @@unique([subjectId, academicYear, grade, className, testDate])
+}
+
+model ExamScope {
+    id            String   @id @default(cuid())
+    subject       Subject  @relation(fields: [subjectId], references: [id])
+    subjectId     String
+    academicYear  Int
+    grade         Int
+    scopeItems    String[]
+    excludedItems String[]
+    examType      String
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    @@unique([subjectId, academicYear, grade, examType])
+}
