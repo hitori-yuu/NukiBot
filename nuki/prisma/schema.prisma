@@ -171,10 +171,10 @@ model Student {
     id             String    @id @default(cuid())
     enrollmentYear Int
     uniqueSchoolId String    @unique
-    firstName      String
-    lastName       String
-    firstNameKana  String
-    lastNameKana   String
+    firstName      String?
+    lastName       String?
+    firstNameKana  String?
+    lastNameKana   String?
     dateOfBirth    DateTime?
     gender         String?
     email          String?
